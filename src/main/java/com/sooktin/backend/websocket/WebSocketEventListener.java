@@ -9,6 +9,8 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
+import java.util.Map;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -18,14 +20,20 @@ public class WebSocketEventListener {
     @EventListener
     public void handleWebSocketDisconnectListener(SessionDisconnectEvent event) {
         StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
-        String nickname = (String) headerAccessor.getSessionAttributes().get("nickname");
-        String roomId = (String) headerAccessor.getSessionAttributes().get("roomId");
+        Map<String, Object> sessionAttributes = headerAccessor.getSessionAttributes();
+        if (sessionAttributes == null) {
+            return;
+        }
+
+        String nickname = (String) sessionAttributes.get("nickname");
+        String sender = (String) sessionAttributes.get("sender");
+        String roomId = (String) sessionAttributes.get("roomId");
 
         if (nickname != null && roomId != null) {
             log.info("User Disconnected : {}", nickname);
 
             ChatMessage chatMessage = new ChatMessage();
-            chatMessage.setSender(nickname);
+            chatMessage.setSender(sender != null ? sender : nickname);
             chatMessage.setSenderName(nickname); //필요시 표시이름설정
             chatMessage.setType(ChatMessage.MessageType.LEAVE);
 

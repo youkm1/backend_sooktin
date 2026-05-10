@@ -60,6 +60,9 @@ dependencies {
 
     implementation('io.projectreactor.netty:reactor-netty')
     implementation('org.springframework.boot:spring-boot-starter-amqp')
+    // Kafka
+    implementation 'org.springframework.kafka:spring-kafka'
+    testImplementation 'org.springframework.kafka:spring-kafka-test'
     implementation 'io.projectreactor.netty:reactor-netty-core'
     implementation 'io.projectreactor.netty:reactor-netty-http'
     compileOnly 'org.projectlombok:lombok'

@@ -1,0 +1,124 @@
+spring:
+  application:
+    name: sooktin
+
+  # 메시징 설정 (Kafka 사용)
+  messaging:
+    # Kafka는 STOMP broker가 아니므로 클라이언트 WebSocket 전달은 SimpleBroker가 담당한다.
+    in-memory: true
+
+  # 데이터소스 설정
+  datasource:
+    url: jdbc:mysql://localhost:3306/sooktin?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: sooktin
+    password: sooktin1234
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      idle-timeout: 300000
+      connection-timeout: 20000
+
+  # JPA 설정
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+    show-sql: true
+
+  # Kafka 설정
+  kafka:
+    bootstrap-servers: localhost:29092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+      retries: 3
+      properties:
+        spring.json.add.type.headers: false
+    consumer:
+      group-id: sooktin-chat-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "com.sooktin.backend.domain,com.sooktin.backend.dto"
+    listener:
+      ack-mode: manual_immediate
+
+  # Redis 설정
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 10000ms
+
+  # 메일 설정 (로컬에서는 비활성화 또는 테스트용)
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${SMTP_USERNAME:test@gmail.com}
+    password: ${SMTP_PASSWORD:test}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+  # 보안 설정
+  security:
+    user:
+      name: admin
+      password: admin1234
+      roles: ADMIN
+
+# 서버 설정
+server:
+  port: 8080
+
+management:
+  health:
+    rabbit:
+      enabled: false
+    mail:
+      enabled: false
+
+# 로깅 설정
+logging:
+  level:
+    root: INFO
+    com.sooktin: DEBUG
+    org.springframework.kafka: INFO
+    org.apache.kafka: WARN
+    org.hibernate.SQL: DEBUG
+
+# JWT 설정 (로컬용)
+jwt:
+  secret-key: local-dev-secret-key-must-be-at-least-256-bits-long-for-hs256
+  issuer: sooktin-local
+  access-expiration: 3600000      # 1시간
+  refresh-expiration: 604800000   # 7일
+
+# S3 설정 (로컬 부팅용 기본값)
+aws:
+  s3-bucket: sooktin-local
+
+# Chat Kafka Topic 설정
+chat:
+  kafka:
+    topic:
+      messages: chat.messages
+      events: chat.events
+    partitions: 3
+    replication-factor: 1
+
+# Swagger 설정
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html

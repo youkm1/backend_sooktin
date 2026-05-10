@@ -55,6 +55,12 @@ public class ChatHttpController {
         @AuthenticationPrincipal CustomUserDetails userDetails,
         @RequestParam Long targetUserId
     ) {
+        if (userDetails.getUserId().equals(targetUserId)) {
+            throw new IllegalArgumentException("자기 자신과는 채팅방을 생성할 수 없습니다.");
+        }
+        userService.findUserById(targetUserId)
+                .orElseThrow(() -> new IllegalArgumentException("대상 사용자를 찾을 수 없습니다: " + targetUserId));
+
         ChatRoom chatRoom = new ChatRoom();
 
         /*if (name != null && !name.trim().isEmpty()) {
@@ -67,10 +73,7 @@ public class ChatHttpController {
         ChatRoom savedChatRoom = chatRoomService.createChatRoom(chatRoom);
 
         userChatRoomService.addUserToRoom(userDetails.getUserId(), savedChatRoom.getId());
-
-        if (targetUserId != null) {
-            userChatRoomService.addUserToRoom(targetUserId, savedChatRoom.getId());
-        }
+        userChatRoomService.addUserToRoom(targetUserId, savedChatRoom.getId());
 
         return ResponseEntity.ok(new ResponseDto<>(201, "채팅방이 성공적으로 생성되었습니다.", savedChatRoom));
     }
@@ -88,7 +91,7 @@ public class ChatHttpController {
         ChatMessage leaveMessage = new ChatMessage();
         leaveMessage.setRoomId(roomId.toString());
         leaveMessage.setSender(userDetails.getUserId().toString());
-        leaveMessage.setSenderName(userDetails.getUsername());
+        leaveMessage.setSenderName(userDetails.getNickname());
         leaveMessage.setContent(userDetails.getNickname() + "님이 채팅방을 나갔습니다.");
         leaveMessage.setType(ChatMessage.MessageType.LEAVE);
 

@@ -10,7 +10,7 @@ import lombok.Setter;
 @Setter
 public class LoginRequest {
     @NotBlank(message = "이메일을 입력해주세요")
-    @Email
+    @Email(message = "이메일 형식이 맞지 않아요")
     private String email;
 
     @NotBlank(message = "비밀번호을 입력해주세요")

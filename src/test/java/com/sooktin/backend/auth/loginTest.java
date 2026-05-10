@@ -32,7 +32,7 @@ public class loginTest {
     void testValidLoginReqDto(){
         LoginRequest dto = new LoginRequest();
         dto.setEmail("foo@ex.com");
-        dto.setPassword("pa2");
+        dto.setPassword("password1");
 
         Set<ConstraintViolation<LoginRequest>> violations = validator.validate(dto);
         assertTrue(violations.isEmpty());
@@ -43,7 +43,7 @@ public class loginTest {
     void testInvalidEmailLoginReqDto(){
         LoginRequest dto = new LoginRequest();
         dto.setEmail("invalid");
-        dto.setPassword("pa2");
+        dto.setPassword("password1");
 
         Set<ConstraintViolation<LoginRequest>> violations = validator.validate(dto);
         assertEquals(1, violations.size());

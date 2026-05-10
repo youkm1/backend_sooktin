@@ -3,11 +3,15 @@ package com.sooktin.backend.global;
 import com.sooktin.backend.domain.ChatMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Profile;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
+@Profile("!local")
+@ConditionalOnProperty(name = "spring.messaging.in-memory", havingValue = "false", matchIfMissing = true)
 @RequiredArgsConstructor
 @Slf4j
 class ChatMessageConsumer {  // ← 이건 아직 없음

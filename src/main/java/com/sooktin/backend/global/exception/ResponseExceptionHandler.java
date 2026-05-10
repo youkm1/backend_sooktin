@@ -40,7 +40,7 @@ public class ResponseExceptionHandler {
     public ResponseEntity<ResponseDto<Object>> handleIllegalArgumentException(IllegalArgumentException ex) {
         ResponseDto<Object> response = new ResponseDto<>(
                 400,
-                "잘못된 요청입니다.",
+                ex.getMessage() != null ? ex.getMessage() : "잘못된 요청입니다.",
                 null
         );
 

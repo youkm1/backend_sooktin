@@ -15,6 +15,7 @@ import com.sooktin.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -149,7 +150,7 @@ public class UserService {
         return userRepository.findByNickname(nickname);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public void delete(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
@@ -161,7 +162,11 @@ public class UserService {
         userRepository.delete(user);
 
         String refreshtoken = "REFRESH_" + user.getEmail();
-        redisTemplate.delete(refreshtoken);
+        try {
+            redisTemplate.delete(refreshtoken);
+        } catch (RedisConnectionFailureException e) {
+            log.warn("Redis 연결 실패로 refresh token 삭제를 건너뜁니다. email={}", email, e);
+        }
     }
 
 

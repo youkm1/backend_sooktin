@@ -39,6 +39,18 @@ spring:
       port: 6370  # 다른 포트 사용
       timeout: 1000
 
+  messaging:
+    in-memory: true
+
+jwt:
+  secret-key: test-secret-key-must-be-at-least-256-bits-long-for-hs256
+  issuer: sooktin-test
+  access-expiration: 3600000
+  refresh-expiration: 604800000
+
+aws:
+  s3-bucket: sooktin-test
+
 # 상세 로깅으로 비동기 확인
 logging:
   level:

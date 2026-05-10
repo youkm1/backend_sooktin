@@ -8,6 +8,7 @@ import com.sooktin.backend.dto.email.EmailCheckRequest;
 import com.sooktin.backend.dto.email.EmailCheckResponse;
 import com.sooktin.backend.service.AuthenticationService;
 import com.sooktin.backend.service.CustomUserDetails;
+import com.sooktin.backend.service.EmailService;
 import com.sooktin.backend.service.UserService;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.validation.Validator;
@@ -17,6 +18,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -54,9 +56,13 @@ class EmailCheckTest {
     @MockBean
     private AuthenticationService authenticationService;
     @MockBean
+    private EmailService emailService;
+    @MockBean
     private JwtUtil jwtUtil;
     @MockBean
     private MeterRegistry meterRegistry; // Prometheus 관련 빈 Mock
+    @MockBean
+    private JpaMetamodelMappingContext jpaMetamodelMappingContext;
     @BeforeEach
     void setUp() {
         User user = User.builder()

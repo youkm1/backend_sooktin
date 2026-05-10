@@ -25,7 +25,7 @@ public class ChatMessage {
     private String content;
     private MessageType type;
     private String senderName;
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm a", timezone = "Asia/Seoul", locale = "en")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul")
     private LocalDateTime timestamp;
 
     public ChatMessage() {

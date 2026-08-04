@@ -67,10 +67,10 @@ services:
     ports:
       - "3306:3306"
     environment:
-      MYSQL_ROOT_PASSWORD: root1234
-      MYSQL_DATABASE: sooktin
-      MYSQL_USER: sooktin
-      MYSQL_PASSWORD: sooktin1234
+      MYSQL_ROOT_PASSWORD: define
+      MYSQL_DATABASE: define
+      MYSQL_USER: define
+      MYSQL_PASSWORD: define
       TZ: Asia/Seoul
     command:
       - --character-set-server=utf8mb4

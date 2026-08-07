@@ -158,6 +158,27 @@ N+1 이 살아 있으면 카드 10장 페이지 기준 **30개 이상**, 수정 
 웹 요청 안에서는 `LazyInitializationException` 이 나지 않는다.
 `@BatchSize` 가 붙으면 카드마다 1건씩 조회하는 대신 `IN` 절로 최대 100건씩 묶어 가져온다.
 
+## 그라파나로 보기 (선택)
+
+수치만 보는 대신 부하 중의 변화를 그래프로 볼 수 있다.
+
+```bash
+docker compose -f docker-compose.monitoring.yml up -d
+```
+
+- Grafana: http://localhost:3000 (admin / admin), 대시보드 "커리어카드 검색"
+- Prometheus: http://localhost:9090 — `/targets` 에서 `sooktin-app` 이 UP 인지 먼저 확인
+
+앱이 컨테이너가 아니라 호스트에서 뜨므로 `monitoring/prometheus-local.yml` 은
+`host.docker.internal:8080` 을 스크레이프한다. prod 의 `prometheus.yml` 은
+EC2 한 대에 앱까지 올라가는 전제라 `localhost:8080` 이고, 서로 바꿔 쓸 수 없다.
+
+패널 중 **HikariCP 커넥션**의 `pending` 을 같이 보면 좋다.
+검색이 커넥션을 오래 붙잡아 풀이 고갈되는 순간이 그래프에 그대로 나타나고,
+그 시점부터 로그인 같은 다른 요청이 connection-timeout 으로 실패하기 시작한다.
+
+대시보드는 provisioning 으로 관리되므로 그라파나 볼륨이 지워져도 기동 시 복구된다.
+
 ## 4. 해석할 때 주의할 점
 
 - **빈 결과는 캐시되지 않는다.** `@Cacheable(unless = "#result.careerCards.isEmpty()")` 때문이다.

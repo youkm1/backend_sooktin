@@ -1,0 +1,46 @@
+# 로컬 측정용 프로메테우스 + 그라파나.
+#
+# prod 의 docker-compose.yml 에도 같은 이미지가 있지만 그쪽은
+#   - network_mode: host (EC2 한 대에 앱까지 올라가 있는 전제)
+#   - prometheus.yml 이 localhost:8080 을 스크레이프
+#   - Grafana 가 /grafana/ 서브패스로 서빙
+# 이라서 앱이 호스트에서 gradlew 로 뜨는 로컬에서는 그대로 못 쓴다.
+#
+# 실행:
+#   docker compose -f docker-compose.monitoring.yml up -d
+#   Grafana  http://localhost:3000  (admin / admin)
+#   대시보드 "커리어카드 검색"
+
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: sooktin-prometheus-local
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus-local.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=24h'
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: sooktin-grafana-local
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+    volumes:
+      # 대시보드를 코드로 관리한다. 볼륨이 날아가도 기동 시 그대로 복구된다.
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+    restart: unless-stopped

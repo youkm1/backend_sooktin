@@ -66,11 +66,12 @@ services:
     container_name: sooktin-mysql
     ports:
       - "3306:3306"
+    # application-local.yml 의 datasource 설정과 반드시 일치해야 한다
     environment:
-      MYSQL_ROOT_PASSWORD: define
-      MYSQL_DATABASE: define
-      MYSQL_USER: define
-      MYSQL_PASSWORD: define
+      MYSQL_ROOT_PASSWORD: root1234
+      MYSQL_DATABASE: sooktin
+      MYSQL_USER: sooktin
+      MYSQL_PASSWORD: sooktin1234
       TZ: Asia/Seoul
     command:
       - --character-set-server=utf8mb4

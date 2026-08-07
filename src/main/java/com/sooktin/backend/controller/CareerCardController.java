@@ -11,6 +11,7 @@ import com.sooktin.backend.global.util.ResponseUtil;
 import com.sooktin.backend.service.CareerCardService;
 import com.sooktin.backend.service.CustomUserDetails;
 import com.sooktin.backend.service.UserService;
+import io.micrometer.core.annotation.Timed;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
@@ -200,6 +201,12 @@ public class CareerCardController {
     }
 
     //TODO 우선 일케하고 그라파나,JMeter로 WebFlux와의 작용 보자
+    @Timed(
+            value = "careercard.search",
+            description = "Time taken to search career cards",
+            percentiles = {0.5, 0.95, 0.99},
+            histogram = true
+    )
     @GetMapping("/search")
     public ResponseEntity<ResponseDto<SearchCareerCardResponse>> searchCareerCards(
             @RequestParam @NotBlank(message = "검색어는 필수 입력값입니다") String keyword,

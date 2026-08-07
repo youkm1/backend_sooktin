@@ -32,14 +32,15 @@ public class UsernoteService {
     private final UsernoteRepositoryCustom usernoteRepositoryCustom;
 
     // C - Create post
-    @CacheEvict(value = "userNote", key = "#usernote.user.email")
+    @Caching(evict = {
+        @CacheEvict(value = "userNote", key = "'email:' + #usernote.user.email"),
+        @CacheEvict(value = "userNoteSearch", allEntries = true)
+    })
     public Usernote createUsernote(Usernote usernote) {
         if (usernote.getContent().length() > 300) {
             throw new IllegalArgumentException("내용은 300자를 초과할 수 없습니다.");
         }
-        Usernote savedUsernote = usernoteRepository.save(usernote);
-        // 이메일별 캐시 무효화 (새 포스트 추가로 목록 변경)
-        return savedUsernote;
+        return usernoteRepository.save(usernote);
     }
 
     // R - Read all posts
@@ -48,17 +49,17 @@ public class UsernoteService {
     }
 
     // R - Read post by ID
-    @Cacheable(value = "userNote",key = "#id")
+    @Cacheable(value = "userNote", key = "'note:' + #id")
     public Optional<Usernote> findById(long id) {
         return usernoteRepository.findById(id);
     }
 
     // U - Update post by ID
     @Caching(
-        put = @CachePut(value = "userNote", key = "#result.id"),
+        put = @CachePut(value = "userNote", key = "'note:' + #result.id"),
         evict = {
-            @CacheEvict(value = "userNote", key = "#result.user.email"),
-            @CacheEvict(value = "userNote", key = "'*'", condition = "#result.content != null")
+            @CacheEvict(value = "userNote", key = "'email:' + #result.user.email"),
+            @CacheEvict(value = "userNoteSearch", allEntries = true)
         }
     )
     public Usernote updateUsernote(Long id, Usernote updatedUsernote) {
@@ -73,20 +74,19 @@ public class UsernoteService {
 
     // D - Delete post by ID
     @Caching(evict = {
-        @CacheEvict(value = "userNote", key = "#id"),
-        @CacheEvict(value = "userNote", allEntries = true, condition = "#result == true")
+        @CacheEvict(value = "userNote", key = "'note:' + #id"),
+        @CacheEvict(value = "userNote", allEntries = true, condition = "#result == true"),
+        @CacheEvict(value = "userNoteSearch", allEntries = true, condition = "#result == true")
     })
     public boolean deleteById(long id) {
         if (usernoteRepository.existsById(id)) {
-            // 삭제 전 사용자 이메일 정보 조회 (캐시 무효화용)
-            Optional<Usernote> usernote = usernoteRepository.findById(id);
             usernoteRepository.deleteById(id);
             return true;
         } else {
             throw new IllegalArgumentException("해당 포스트가 존재하지 않습니다. id: " + id);
         }
     }
-    @Cacheable(value = "userNote", key = "#email")
+    @Cacheable(value = "userNote", key = "'email:' + #email")
     public List<FindMyUsernoteWithJWTResponse> findByUserEmail(String email) {
         List<Usernote> usernotes = usernoteRepository.findByUser_Email(email);
 
@@ -111,8 +111,8 @@ public class UsernoteService {
 
     @Transactional(readOnly = true)
     @Cacheable(
-            value = "userNote",
-            key = "#keyword",
+            value = "userNoteSearch",
+            key = "#keyword + '_page' + #pageable.pageNumber + '_size' + #pageable.pageSize",
             unless = "#result.usernotes.isEmpty()"
     )
     public SearchUsernoteResponse searchUsernotes(String keyword, Pageable pageable) {

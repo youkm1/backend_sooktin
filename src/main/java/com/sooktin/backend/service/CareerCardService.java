@@ -35,7 +35,10 @@ public class CareerCardService {
     private final CareerCardMapper careerCardMapper;
 
     // C - 커리어카드 생성 (S3 이미지 업로드 추가)
-    @CachePut(value = "careerCard", key = "#user.id")
+    @Caching(
+        put = @CachePut(value = "careerCard", key = "'user:' + #user.id"),
+        evict = @CacheEvict(value = "careerCardSearch", allEntries = true)
+    )
     public CareerCardDTO createCareerCard(CreateCareerCardRequest request, User user, List<MultipartFile> files) {
         if (careerCardRepository.findByUserId(user.getId()).isPresent()) {
             throw new IllegalArgumentException("해당 유저는 이미 커리어카드를 가지고 있습니다.");
@@ -66,7 +69,7 @@ public class CareerCardService {
     }
 
     // R - 특정 ID로 커리어카드 조회
-    @Cacheable(value = "careerCard", key = "#cardId")
+    @Cacheable(value = "careerCard", key = "'card:' + #cardId")
     public Optional<CareerCardDTO> findByCardId(Long cardId) {
 
         return careerCardRepository.findById(cardId)
@@ -74,7 +77,7 @@ public class CareerCardService {
     }
 
     // R - 특정 유저 ID로 커리어카드 조회
-    @Cacheable(value = "careerCard", key = "#userId")
+    @Cacheable(value = "careerCard", key = "'user:' + #userId")
     public Optional<CareerCardDTO> findByUserId(Long userId) {
 
         return careerCardRepository.findByUserId(userId)
@@ -85,11 +88,11 @@ public class CareerCardService {
     // U - 커리어카드 수정 (S3 이미지 변경 가능)
     @Caching(
         put = {
-            @CachePut(value = "careerCard", key = "#result.id"),
-            @CachePut(value = "careerCard", key = "#user.id")
+            @CachePut(value = "careerCard", key = "'card:' + #result.cardId"),
+            @CachePut(value = "careerCard", key = "'user:' + #user.id")
         },
         evict = {
-            @CacheEvict(value = "careerCard", key = "'keyword_*'", allEntries = true)
+            @CacheEvict(value = "careerCardSearch", allEntries = true)
         }
     )
     @Transactional
@@ -118,9 +121,9 @@ public class CareerCardService {
     // D - 커리어카드 삭제 (S3 이미지도 삭제)
     @Transactional
     @Caching(evict = {
-        @CacheEvict(value = "careerCard", key = "#cardId"),
-        @CacheEvict(value = "careerCard", key = "#result.userId", condition = "#result != null"),
-        @CacheEvict(value = "careerCard", allEntries = true)
+        @CacheEvict(value = "careerCard", key = "'card:' + #cardId"),
+        @CacheEvict(value = "careerCard", key = "'user:' + #result.userId", condition = "#result != null"),
+        @CacheEvict(value = "careerCardSearch", allEntries = true)
     })
     public CareerCardDTO deleteById(Long cardId) {
         CareerCard careerCard = careerCardRepository.findById(cardId)
@@ -185,8 +188,8 @@ public class CareerCardService {
     // 커리어카드 검색
     @Transactional(readOnly = true)
     @Cacheable(
-            value = "careerCard",
-            key = "'keyword_'+#keyword+'_page'+#page+'_size'+#size",
+            value = "careerCardSearch",
+            key = "#keyword + '_page' + #page + '_size' + #size",
             unless = "#result.careerCards.isEmpty()"
     )
     public SearchCareerCardResponse searchWithDtos(String keyword, int page, int size) {

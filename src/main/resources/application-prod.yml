@@ -60,3 +60,21 @@ spring:
       timeout: 10000ms  # ← 단위 명시
       ssl:
         enabled: false
+
+# prometheus.yml 이 /actuator/prometheus 를 스크레이프한다.
+# 이 블록이 없으면 Spring Boot 기본값(health 만 노출)이라 스크레이프가 404 로 실패한다.
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: health, info, prometheus, metrics
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true

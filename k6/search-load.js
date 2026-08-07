@@ -68,9 +68,19 @@ export function setup() {
     { headers: { 'Content-Type': 'application/json' } },
   );
 
+  // status 0 은 응답을 아예 못 받은 것 = 앱이 안 떠 있다는 뜻이다.
+  // 인증 문제와 구분해서 알려줘야 엉뚱한 곳을 찾지 않는다.
+  if (res.status === 0) {
+    throw new Error(
+      `${BASE_URL} 에 연결할 수 없습니다. 앱이 실행 중인지 확인하세요.\n` +
+        `  1) 다른 터미널에서 ./gradlew bootRun 으로 앱을 띄우고 그대로 둘 것\n` +
+        `  2) curl ${BASE_URL}/actuator/health 로 {"status":"UP"} 확인 후 다시 실행`,
+    );
+  }
   if (res.status !== 200) {
     throw new Error(
-      `로그인 실패 (${res.status}). 시딩이 됐는지, SEED_EMAIL/SEED_PASSWORD 가 맞는지 확인하세요. body=${res.body}`,
+      `로그인 실패 (${res.status}). 시딩(sooktin.seed.enabled=true)이 됐는지, ` +
+        `SEED_EMAIL/SEED_PASSWORD 가 맞는지 확인하세요. body=${res.body}`,
     );
   }
 

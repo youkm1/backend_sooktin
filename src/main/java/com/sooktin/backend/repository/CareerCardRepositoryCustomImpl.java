@@ -1,10 +1,12 @@
 package com.sooktin.backend.repository;
 
 import com.querydsl.core.BooleanBuilder;
-import com.querydsl.jpa.impl.JPAQuery;
+import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.core.types.dsl.StringPath;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.sooktin.backend.domain.CareerCard;
 import com.sooktin.backend.domain.QCareerCard;
+import com.sooktin.backend.domain.QExperience;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -18,9 +20,16 @@ import java.util.List;
 public class CareerCardRepositoryCustomImpl implements CareerCardRepositoryCustom {
     private final JPAQueryFactory queryFactory;
 
+    /*
+     * experiences, skills 조건은 cc.experiences.any() 로 쓰면 카드 한 건마다
+     * careercards 를 다시 스캔하는 상관 서브쿼리가 만들어진다.
+     * 카드 수가 늘어나면 그만큼 곱으로 느려지므로 명시적 조인 + distinct 로 한 번만 훑는다.
+     */
     @Override
     public Page<CareerCard> searchCareerCards(String keyword, Pageable pageable) {
         QCareerCard cc = QCareerCard.careerCard;
+        QExperience experience = new QExperience("experience");
+        StringPath skill = Expressions.stringPath("skill");
 
         BooleanBuilder builder = new BooleanBuilder();
 
@@ -30,20 +39,26 @@ public class CareerCardRepositoryCustomImpl implements CareerCardRepositoryCusto
                     cc.major.like(pattern),
                     cc.department.like(pattern),
                     cc.job.like(pattern),
-                    cc.experiences.any().company.like(pattern),
-                    cc.skills.any().like(pattern)
+                    experience.company.like(pattern),
+                    skill.like(pattern)
             );
         }
         List<CareerCard> content = queryFactory
                 .selectFrom(cc)
+                .distinct()
+                .leftJoin(cc.experiences, experience)
+                .leftJoin(cc.skills, skill)
                 .where(builder)
+                .orderBy(cc.id.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
 
         Long total = queryFactory
-                .select(cc.count())
+                .select(cc.countDistinct())
                 .from(cc)
+                .leftJoin(cc.experiences, experience)
+                .leftJoin(cc.skills, skill)
                 .where(builder)
                 .fetchOne();
 
@@ -53,6 +68,9 @@ public class CareerCardRepositoryCustomImpl implements CareerCardRepositoryCusto
     @Override
     public Page<CareerCard> searchCareerCardsWithOrCondition(String keyword, Pageable pageable) {
         QCareerCard cc = QCareerCard.careerCard;
+        QExperience experience = new QExperience("experience");
+        StringPath skill = Expressions.stringPath("skill");
+
         BooleanBuilder builder = new BooleanBuilder();
 
         if (keyword != null && !keyword.trim().isEmpty()) {
@@ -68,15 +86,15 @@ public class CareerCardRepositoryCustomImpl implements CareerCardRepositoryCusto
                     condition.or(cc.major.equalsIgnoreCase(singleKeyword))
                             .or(cc.department.equalsIgnoreCase(singleKeyword))
                             .or(cc.job.equalsIgnoreCase(singleKeyword))
-                            .or(cc.experiences.any().company.equalsIgnoreCase(singleKeyword))
-                            .or(cc.skills.any().equalsIgnoreCase(singleKeyword));
+                            .or(experience.company.equalsIgnoreCase(singleKeyword))
+                            .or(skill.equalsIgnoreCase(singleKeyword));
                 } else {
                     String pattern = "%" + singleKeyword + "%";
                     condition.or(cc.major.likeIgnoreCase(pattern))
                             .or(cc.department.likeIgnoreCase(pattern))
                             .or(cc.job.likeIgnoreCase(pattern))
-                            .or(cc.experiences.any().company.likeIgnoreCase(pattern))
-                            .or(cc.skills.any().likeIgnoreCase(pattern));
+                            .or(experience.company.likeIgnoreCase(pattern))
+                            .or(skill.likeIgnoreCase(pattern));
                 }
 
                 orBuilder.or(condition);
@@ -87,14 +105,20 @@ public class CareerCardRepositoryCustomImpl implements CareerCardRepositoryCusto
 
         List<CareerCard> content = queryFactory
                 .selectFrom(cc)
+                .distinct()
+                .leftJoin(cc.experiences, experience)
+                .leftJoin(cc.skills, skill)
                 .where(builder)
+                .orderBy(cc.id.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
 
         Long total = queryFactory
-                .select(cc.count())
+                .select(cc.countDistinct())
                 .from(cc)
+                .leftJoin(cc.experiences, experience)
+                .leftJoin(cc.skills, skill)
                 .where(builder)
                 .fetchOne();
 

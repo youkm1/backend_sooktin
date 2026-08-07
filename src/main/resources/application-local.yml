@@ -27,7 +27,17 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
         format_sql: true
+        # 쿼리 실행 횟수를 /actuator/prometheus 의 hibernate_statements_total 로 노출한다.
+        # N+1 수정 전/후 쿼리 수를 로그 파싱 없이 비교하는 용도.
+        generate_statistics: true
+        jdbc:
+          batch_size: 100
+    # 부하 테스트 중에는 반드시 false 로 띄울 것 (SQL 로깅이 측정값을 왜곡한다)
     show-sql: true
+
+  # 캐시 전략. 측정 시 --spring.cache.type=none 으로 띄우면 캐시 없이 baseline 을 잴 수 있다.
+  cache:
+    type: redis
 
   # Kafka 설정
   kafka:
@@ -81,11 +91,28 @@ server:
   port: 8080
 
 management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus, metrics
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
   health:
     rabbit:
       enabled: false
     mail:
       enabled: false
+
+# 성능 측정용 더미 데이터 시딩 (DevDataSeeder).
+# 최초 1회만 true 로 띄워 데이터를 만들고, 이후에는 false 로 되돌린다.
+sooktin:
+  seed:
+    enabled: false
+    count: 5000
 
 # 로깅 설정
 logging:

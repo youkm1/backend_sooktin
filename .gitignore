@@ -38,3 +38,6 @@ out/
 /.DS_Store
 .DS_Store
 src/main/resources/application.yml
+
+### 환경변수 (docker-compose 가 읽는 실제 값). 템플릿은 .env.example 참고
+.env

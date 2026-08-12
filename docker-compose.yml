@@ -62,7 +62,9 @@ services:
     network_mode: "host"  # host 모드로 prometheus 접근 가능
     environment:
       - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=sooktin2024!
+      # EC2 의 ~/app/.env 에서 읽는다. 값이 없으면 compose 가 기동을 거부한다.
+      # (빈 비밀번호로 조용히 뜨는 것보다 배포가 실패하는 편이 안전하다)
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:?~/app/.env 에 GRAFANA_ADMIN_PASSWORD 를 설정하세요}
       - GF_USERS_ALLOW_SIGN_UP=false
       - GF_SERVER_HTTP_PORT=3000
       - GF_SERVER_ROOT_URL=https://sooktin.duckdns.org/grafana/
